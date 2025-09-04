@@ -1,0 +1,36 @@
+legal-lens/
+├── .env.local
+├── .gitignore
+├── eslint.config.mjs
+├── jsconfig.json (or jsonffg.json - should probably be renamed)
+├── next.config.mjs
+├── package.json
+├── package-lock.json
+├── postcss.config.mjs
+├── README.md
+├── public/
+│   └── favicon.ico
+└── src/
+    ├── app/
+    │   ├── api/
+    │   │   ├── analyze/
+    │   │   │   └── route.js
+    │   │   ├── consult/
+    │   │   │   └── route.js
+    │   │   ├── health/
+    │   │   │   └── route.js
+    │   │   ├── lawoftheday/
+    │   │   │   └── route.js
+    │   │   └── proofread/
+    │   │       └── route.js
+    │   ├── home/
+    │   │   └── page.jsx
+    │   ├── globals.css
+    │   ├── layout.js
+    │   └── page.js
+    └── lib/
+        ├── models/
+        │   ├── chatModel.js
+        │   └── lawModel.js
+        ├── gemini.js
+        └── mongodb.js
