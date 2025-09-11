@@ -10,16 +10,16 @@ export async function POST(request) {
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json(
-        { error: 'Invalid input: message is required and must be a string' }, 
+        { error: 'Invalid input: message is required and must be a string' },
         { status: 400 }
       );
     }
 
     await dbConnect();
-    
+
     let chatSession;
     let actualSessionId = sessionId;
-    
+
 
     if (!sessionId) {
       actualSessionId = uuidv4();
@@ -37,7 +37,7 @@ export async function POST(request) {
       chatSession = await ChatSession.findOne({ sessionId });
       if (!chatSession) {
         return NextResponse.json(
-          { error: 'Chat session not found' }, 
+          { error: 'Chat session not found' },
           { status: 404 }
         );
       }
@@ -48,23 +48,23 @@ export async function POST(request) {
       parts: message,
       timestamp: new Date()
     });
-    
+
     const recentMessages = chatSession.messages.slice(-10);
     const history = recentMessages.map(msg => ({
       role: msg.role,
       parts: msg.parts
     }));
-    
+
     const response = await getConsultantResponse(history, message);
-    
+
     chatSession.messages.push({
       role: 'model',
       parts: response,
       timestamp: new Date()
     });
-    
+
     await chatSession.save();
-    
+
     return NextResponse.json({
       response,
       sessionId: actualSessionId
@@ -72,16 +72,16 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Consult API error:', error);
-    
+
     if (error.message.includes('Failed to generate consultant response')) {
       return NextResponse.json(
-        { error: 'Consultant service temporarily unavailable' }, 
+        { error: 'Consultant service temporarily unavailable' },
         { status: 503 }
       );
     }
-    
+
     return NextResponse.json(
-      { error: 'Internal Server Error' }, 
+      { error: 'Internal Server Error' },
       { status: 500 }
     );
   }

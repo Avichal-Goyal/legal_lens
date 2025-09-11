@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export function middleware(req) {
+export function clientMiddleware(req) {
     const path = req.nextUrl.pathname;
     const isPublicPath = path === '/login' || path === '/signup' || path === '/verifyemail';
 

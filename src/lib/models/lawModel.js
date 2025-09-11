@@ -8,10 +8,10 @@ const LawSchema = new mongoose.Schema({
   category:{
     type: String,
     required: true,
-    enum: ['Historical', 'Modern', 'Contract Law', 'Fun Fact'] 
+    enum: ['Historical', 'Modern', 'Contract Law', 'Fun Fact']
   },
-  source: { 
-    type: String, 
+  source: {
+    type: String,
     default: 'Legal Lens Research Team'
   }
 
@@ -30,12 +30,12 @@ LawSchema.statics.getRandomLaw = async function(category) {
   if (category) {
     matchStage.category = category;
   }
-  
+
   const result = await this.aggregate([
     { $match: matchStage },
     { $sample: { size: 1 } }
   ]);
-  
+
   return result.length > 0 ? result[0] : null;
 };
 

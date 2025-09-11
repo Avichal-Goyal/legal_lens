@@ -15,7 +15,7 @@ export async function GET(request) {
     }
     if (!law) {
       return NextResponse.json(
-        { error: 'No laws found in the database' }, 
+        { error: 'No laws found in the database' },
         { status: 404 }
       );
     }
@@ -23,7 +23,7 @@ export async function GET(request) {
   } catch (error) {
     console.error('Failed to fetch law of the day:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' }, 
+      { error: 'Internal Server Error' },
       { status: 500 }
     );
   }
