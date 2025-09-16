@@ -37,11 +37,11 @@ function DocumentAnalyzer() {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        // Handle file upload logic here
+
         alert(selectedFile ? `Uploading: ${selectedFile.name}` : "No file selected");
         const fileText = await selectedFile.text();
 
-        // Send JSON instead of FormData
+        // Send fileText to backend for analysis
         const response = await axios.post('/api/analyze', { text: fileText });
 
         console.log('Analysis response:', response.data);
@@ -67,7 +67,6 @@ function DocumentAnalyzer() {
                 </div>
             </section>
 
-            {/* Upload Form - 40% */}
             <div className="md:w-2/5 w-full flex items-center justify-center bg-transparent">
                 <form
                     className="w-full max-w-md border-2 border-dashed border-white bg-transparent rounded-2xl shadow-2xl p-8 flex flex-col items-center gap-8 py-4"
