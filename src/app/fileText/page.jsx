@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import Step from "@/components/Step";
+import axios from 'axios';
 
 function DocumentAnalyzer() {
     const [selectedFile, setSelectedFile] = useState(null);
@@ -34,10 +35,16 @@ function DocumentAnalyzer() {
         inputRef.current.click();
     };
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
         // Handle file upload logic here
         alert(selectedFile ? `Uploading: ${selectedFile.name}` : "No file selected");
+        const fileText = await selectedFile.text();
+
+        // Send JSON instead of FormData
+        const response = await axios.post('/api/analyze', { text: fileText });
+
+        console.log('Analysis response:', response.data);
     };
 
     return (

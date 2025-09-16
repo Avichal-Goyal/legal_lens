@@ -51,10 +51,13 @@ Focus on:
 4. Ensuring consistency in terminology`;
 
 export async function analyzeDocumentWithGemini(documentText) {
-  try {
-    const model=genAI.getGenerativeModel({
-      model:"gemini-1.5-flash",
-      generationConfig:{
+  let lastError;
+  let maxRetries = 3;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const model=genAI.getGenerativeModel({
+        model:"gemini-1.5-flash",
+        generationConfig:{
         temperature:0.1,
         topK:1,
         topP:0.95,
@@ -65,13 +68,28 @@ export async function analyzeDocumentWithGemini(documentText) {
     const prompt=`${DOCUMENT_ANALYSIS_PROMPT}\n\nDocument to analayze:\n${documentText.substring(0,30000)}`;
     const result=await model.generateContent(prompt);
     const response= result.response;
-    const text=response.text;
+    const text=response.text();
     const cleanText = text.replace(/```json\s*|\s*```/g, '');
     return JSON.parse(cleanText);
   } catch (error) {
-    console.error('Error in document analysis:', error);
-    throw new Error('Failed to analyze document');
+      lastError = error;
+
+      // if it's a 503, retry with exponential backoff
+      if (error.status === 503 || error.message?.includes("503")) {
+        console.warn(`Gemini overloaded (attempt ${attempt}/${maxRetries})`);
+        if (attempt < maxRetries) {
+          await new Promise((res) => setTimeout(res, 1000 * attempt));
+          continue;
+        }
+      }
+
+      // for non-503 errors or after max retries, stop
+      console.error("Error in document analysis:", error);
+      throw new Error("Failed to analyze document");
+    }
   }
+
+  throw lastError;
 }
 export async function getConsultantResponse(history, userMessage){
   try {
