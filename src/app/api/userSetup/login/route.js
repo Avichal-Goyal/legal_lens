@@ -18,7 +18,6 @@ export async function POST(request) {
             );
         }
 
-        //verifying password
         const validatePassword = await bcryptjs.compare(password, user.password);
         if (!validatePassword) {
             return NextResponse.json(
@@ -27,7 +26,7 @@ export async function POST(request) {
             );
         }
 
-        //creating token
+        
         const tokenData = {
             id: user._id,
             email: user.email,

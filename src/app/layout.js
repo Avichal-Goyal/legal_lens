@@ -1,6 +1,6 @@
 "use client"
 import "./globals.css";
-import NavbarPage from "./navbar";
+import NavbarPage from "@/components/Navbar.jsx";
 import Navbar2 from "@/components/navbar2";
 import React from "react";
 import { usePathname } from "next/navigation";
