@@ -3,11 +3,13 @@
 import React, { useState, useRef } from 'react';
 import Step from "@/components/Step";
 import axios from 'axios';
+import { useRouter } from "next/navigation";
 
 function DocumentAnalyzer() {
     const [selectedFile, setSelectedFile] = useState(null);
     const [dragActive, setDragActive] = useState(false);
     const inputRef = useRef(null);
+    const router = useRouter();
 
     const handleFileChange = (event) => {
         setSelectedFile(event.target.files[0]);
@@ -45,6 +47,11 @@ function DocumentAnalyzer() {
         const response = await axios.post('/api/analyze', { text: fileText });
 
         console.log('Analysis response:', response.data);
+
+        localStorage.setItem("analysisResult", JSON.stringify(response.data));
+
+        // Redirect to results page
+        router.push("/analysisResult");
     };
 
     return (

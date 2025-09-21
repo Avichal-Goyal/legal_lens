@@ -41,7 +41,7 @@ export default function Page() {
                 <FeatureCard
                     title="Consultant AI"
                     description="Have a legal question? Our AI assistant provides informative, easy-to-understand answers on a wide range of legal topics. Whether you’re curious about contract terms, employment law, or general legal concepts, get instant guidance 24/7. (Note: This tool offers information, not legal advice.)"
-                    goTo={<Link href="/consultantPage">Start consultation {">"}</Link>}
+                    goTo={<Link href="/consultant">Start consultation {">"}</Link>}
                 />
                 <FeatureCard
                     title="AI Proofreading"

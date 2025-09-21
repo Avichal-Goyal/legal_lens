@@ -9,7 +9,7 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-    if (text.length > 30000) {
+    if (text.length > 750000) {
       return NextResponse.json(
         { error: 'Document text exceeds maximum length of 30,000 characters' },
         { status: 400 }

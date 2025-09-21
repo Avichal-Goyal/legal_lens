@@ -3,7 +3,7 @@ import React from 'react'
 function FeatureCard({ icon, title, description, goTo }) {
     return (
         // Add "flex" and "flex-col" to make the card a flex container
-        <div className="flex flex-col h-full bg-gray-800 p-6 rounded-lg shadow-lg">
+        <div className="flex flex-col h-full bg-gray-800 p-6 rounded-lg shadow-lg transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl">
 
             {/* This div will now grow to fill available space */}
             <div className="flex-grow">

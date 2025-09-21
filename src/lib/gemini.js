@@ -91,50 +91,68 @@ export async function analyzeDocumentWithGemini(documentText) {
 
   throw lastError;
 }
-export async function getConsultantResponse(history, userMessage){
-  try {
-    const model=genAI.getGenerativeModel({
-      model:"gemini-1.5-flash",
-      systemInstruction: CONSULTANT_SYSTEM_PROMPT,
-      generationConfig:{
-        temperature:0.7,
-        topK:40,
-        topP:0.95,
-        maxOutputTokens:1024,
-        responseMimeType:'application/json',
-      },
-      safetySettings:[
-        {
-          category:HarmCategory.HARM_CATEGORY_HARASSMENT,
-          threshold:HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+export async function getConsultantResponse(history, userMessage) {
+  let lastError;
+  let maxRetries = 3;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+        systemInstruction: CONSULTANT_SYSTEM_PROMPT,
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 1024,
+          // responseMimeType: 'application/json',
         },
-        {
-          category:HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-          threshold:HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
-        },
+        safetySettings: [
+          {
+            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+            threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+          },
+          {
+            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+          },
+          {
+            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+          },
+        ],
+      });
+      const chat = model.startChat({
+        history: history
+          .filter(msg => msg.role !== 'system') // ✅ remove system messages
+          .map(msg => ({
+            role: msg.role,
+            parts: [{ text: msg.parts }],
+          })),
+      });
 
-        {
-          category:HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-          threshold:HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
-        },
-      ],
-    });
-    const chat=model.startChat({
-      history:history.map(msg=>({
-        role:msg.role,
-        parts:[{text:msg.parts}],
-      })),
-    })
-    const result=await chat.sendMessage(userMessage);
-    const response= result.response;
-    return response.text();
+      const result = await chat.sendMessage(userMessage);
+      const response = result.response;
+      return response.text();
+    } catch (error) {
+      lastError = error;
 
-  } catch (error) {
-    console.log('Error in consultant response:', error);
-    throw new Error('Failed to generate consultant response');
+      // Retry on 503 errors with exponential backoff
+      if (error.status === 503 || error.message?.includes("503")) {
+        console.warn(`Gemini overloaded (attempt ${attempt}/${maxRetries})`);
+        if (attempt < maxRetries) {
+          await new Promise((res) => setTimeout(res, 1000 * attempt));
+          continue;
+        }
+      }
+
+      // For non-503 errors or after max retries, stop
+      console.error('Error in consultant response:', error);
+      throw new Error('Failed to generate consultant response');
+    }
   }
+  throw lastError;
 }
-export async function proofreadTextWithGemini(text){
+export async function proofreadTextWithGemini(text) {
   try {
       const model = genAI.getGenerativeModel({
       model: 'gemini-1.5-flash',
@@ -152,7 +170,7 @@ export async function proofreadTextWithGemini(text){
     const response =  result.response;
     const resultText = response.text();
     const cleanText = resultText.replace(/```json\s*|\s*```/g, '');
-    
+
     return JSON.parse(cleanText);
   } catch (error) {
     console.error('Error in text proofreading:', error);

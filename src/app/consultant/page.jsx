@@ -1,64 +1,32 @@
-// src/app/consultant/page.jsx
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function ConsultantPage() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
   const messagesEndRef = useRef(null);
-  const router = useRouter();
-
-  // Check if user is authenticated
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/userSetup/verify', {
-          method: 'GET',
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          setIsAuthenticated(true);
-          setUser(userData);
-        } else {
-          router.push('/login');
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        router.push('/login');
-      }
-    };
-
-    checkAuth();
-  }, [router]);
 
   // Initialize with the disclaimer message
   useEffect(() => {
-    if (isAuthenticated) {
-      setMessages([
-        {
-          id: 1,
-          text: "DISCLAIMER: I am an AI assistant and cannot provide legal advice. The information provided is for educational purposes only. Please consult with a qualified legal professional for your specific situation.",
-          sender: 'bot',
-          timestamp: new Date(),
-          isDisclaimer: true
-        },
-        {
-          id: 2,
-          text: "Hello! I'm your Legal Lens consultant. I can help explain legal concepts and terminology. What would you like to know about today?",
-          sender: 'bot',
-          timestamp: new Date()
-        }
-      ]);
-    }
-  }, [isAuthenticated]);
+    setMessages([
+      {
+        id: 1,
+        text: "DISCLAIMER: I am an AI assistant and cannot provide legal advice. The information provided is for educational purposes only. Please consult with a qualified legal professional for your specific situation.",
+        sender: 'bot',
+        timestamp: new Date(),
+        isDisclaimer: true
+      },
+      {
+        id: 2,
+        text: "Hello! I'm your Legal Lens consultant. I can help explain legal concepts and terminology. What would you like to know about today?",
+        sender: 'bot',
+        timestamp: new Date()
+      }
+    ]);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -70,7 +38,7 @@ export default function ConsultantPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!input.trim() || isLoading || !isAuthenticated) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage = {
       id: Date.now(),
@@ -84,16 +52,14 @@ export default function ConsultantPage() {
     setIsLoading(true);
 
     try {
-      
       const response = await fetch('/api/consult', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           message: input,
-          sessionId: sessionId 
+          sessionId: sessionId
         }),
       });
 
@@ -102,8 +68,7 @@ export default function ConsultantPage() {
       }
 
       const data = await response.json();
-      
-     
+
       if (!sessionId && data.sessionId) {
         setSessionId(data.sessionId);
       }
@@ -118,7 +83,7 @@ export default function ConsultantPage() {
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
       console.error('Error sending message:', error);
-      
+
       const errorMessage = {
         id: Date.now() + 1,
         text: "I'm sorry, I'm experiencing technical difficulties at the moment. Please try again later.",
@@ -126,66 +91,15 @@ export default function ConsultantPage() {
         timestamp: new Date(),
         isError: true
       };
-      
+
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/userSetup/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      setIsAuthenticated(false);
-      setUser(null);
-      router.push('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Verifying authentication...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="bg-blue-600 p-2 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
-            </div>
-            <h1 className="ml-3 text-2xl font-bold text-gray-900">Legal Lens</h1>
-          </div>
-          <nav className="flex items-center space-x-8">
-            <a href="/dashboard" className="text-gray-500 hover:text-gray-700">Dashboard</a>
-            <a href="/readers" className="text-gray-500 hover:text-gray-700">Readers</a>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Welcome, {user?.username}</span>
-              <button 
-                onClick={handleLogout}
-                className="bg-gray-200 text-gray-700 px-3 py-1 rounded-md hover:bg-gray-300"
-              >
-                Logout
-              </button>
-            </div>
-          </nav>
-        </div>
-      </header>
+    <div className="min-h-screen flex flex-col bg-gray-100">
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
