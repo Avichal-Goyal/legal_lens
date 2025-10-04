@@ -1,6 +1,7 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import Head from 'next/head';
+import { checkJargonMeaning } from '@/lib/gemini';
 import { Search, FileText, BookOpen, Briefcase, ChevronRight, Scale } from 'lucide-react';
 
 // --- Mock Data (In a real app, this would come from your backend API) ---
@@ -32,20 +33,34 @@ const articles = [
     },
 ];
 
-const templates = [
-    { name: "Basic Non-Disclosure Agreement" },
-    { name: "Freelance Services Agreement" },
-    { name: "Residential Lease Agreement" },
+// Displayed by default in the Jargon Buster
+const featuredGlossaryTerms = [
+    { term: "Liability", definition: "Legal responsibility for one's acts or omissions." },
+    { term: "Indemnity", definition: "A promise by one party to cover the losses of another party." },
+    { term: "Jurisdiction", definition: "The official power to make legal decisions and judgments over a person, territory, or subject matter." },
+    { term: "Tort", definition: "A civil wrong that causes a claimant to suffer loss or harm, resulting in legal liability for the person who commits the tortious act." },
+    { term: "Affidavit", definition: "A written statement confirmed by oath or affirmation, for use as evidence in court." },
+    { term: "Injunction", definition: "A court order that compels a party to do or refrain from specific acts." },
 ];
 
-const glossaryTerms = [
-    { term: "Liability", definition: "Legal responsibility for one's acts or omissions." },
-    { term: "Indemnity", definition: "A promise to cover the losses of another party." },
-];
 
 // --- The Main Page Component ---
 
 const ReadersPage = () => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchResult, setSearchResult] = useState(null);
+
+    const handleJargonSearch = (e) => {
+        e.preventDefault();
+        if (!searchTerm.trim()) {
+            setSearchResult(null);
+            return;
+        }
+
+        const response = checkJargonMeaning(searchTerm);
+        setSearchResult(response);
+    };
+
     return (
         <>
         <Head>
@@ -105,14 +120,40 @@ const ReadersPage = () => {
                 <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 flex flex-col flex-grow">
                 <h2 className="text-2xl font-bold text-white mb-4">Jargon Buster</h2>
                 <div className="space-y-3">
-                    {glossaryTerms.map((item, index) => (
+                    {featuredGlossaryTerms.map((item, index) => (
                     <div key={index}>
                         <h4 className="font-semibold text-white">{item.term}</h4>
                         <p className="text-gray-400 text-sm">{item.definition}</p>
                     </div>
                     ))}
-                    <a href="#" className="text-blue-400 hover:underline pt-2 inline-block">Explore all terms &rarr;</a>
                 </div>
+
+                {/* --- NEW: Jargon Search Form --- */}
+                <form onSubmit={handleJargonSearch} className="mt-6">
+                    <label htmlFor="jargon-search" className="sr-only">Search Jargon</label>
+                    <div className="relative">
+                        <input
+                            id="jargon-search"
+                            type="search"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Define a legal term..."
+                            className="w-full p-3 pr-10 text-sm bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
+                        />
+                        <button type="submit" className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-white">
+                            <Search className="h-5 w-5" />
+                        </button>
+                    </div>
+                </form>
+
+                {/* --- NEW: Search Result Display --- */}
+                {searchResult && (
+                    <div className="mt-4 p-4 bg-gray-900/50 border border-gray-700 rounded-md animate-fade-in">
+                            <h4 className="font-semibold text-blue-400">{searchResult.term}</h4>
+                            <p className="text-white text-sm">{searchResult.definition}</p>
+                    </div>
+                )}
+
                 </div>
             </aside>
             </div>

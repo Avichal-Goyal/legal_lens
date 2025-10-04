@@ -19,7 +19,7 @@ const DOCUMENT_ANALYSIS_PROMPT = `You are a legal document analysis assistant. A
 
 Focus on identifying the most important clauses such as Parties Involved, Term Length, Termination Conditions, Liability, Confidentiality, Payment Terms, etc.`;
 
-const CONSULTANT_SYSTEM_PROMPT = `You are a legal information assistant designed to provide educational information about legal concepts, terminology, and general legal knowledge. 
+const CONSULTANT_SYSTEM_PROMPT = `You are a legal information assistant designed to provide educational information about legal concepts, terminology, and general legal knowledge.
 
 CRITICAL CONSTRAINTS:
 1. You MUST begin every response with this exact disclaimer: "DISCLAIMER: I am an AI assistant and cannot provide legal advice. The information provided is for educational purposes only. Please consult with a qualified legal professional for your specific situation."
@@ -49,6 +49,12 @@ Focus on:
 2. Improving clarity and readability while maintaining legal precision
 3. Identifying ambiguous language that could be misinterpreted
 4. Ensuring consistency in terminology`;
+
+const JARGON_MEANING_PROMPT = `You are legal words dictionary. You have to tell the meaning of a legal word provided below in a very easy way. Also try to explain with the help of example sentences.
+
+Focus on:
+1. Tell meaning of the legal word in a simple way
+2. Provide with some example sentences`;
 
 export async function analyzeDocumentWithGemini(documentText) {
   let lastError;
@@ -154,15 +160,15 @@ export async function getConsultantResponse(history, userMessage) {
 }
 export async function proofreadTextWithGemini(text) {
   try {
-      const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      generationConfig: {
-        temperature: 0.1,
-        topK: 1,
-        topP: 0.95,
-        maxOutputTokens: 2048,
-        responseMimeType: 'application/json',
-      },
+    const model = genAI.getGenerativeModel({
+    model: 'gemini-1.5-flash',
+    generationConfig: {
+      temperature: 0.1,
+      topK: 1,
+      topP: 0.95,
+      maxOutputTokens: 2048,
+      responseMimeType: 'application/json',
+    },
     });
     const prompt = `${PROOFREADING_PROMPT}\n\nText to proofread:\n${text}`;
 
@@ -175,5 +181,65 @@ export async function proofreadTextWithGemini(text) {
   } catch (error) {
     console.error('Error in text proofreading:', error);
     throw new Error('Failed to proofread text');
+  }
+}
+
+export async function checkJargonMeaning(legalWord) {
+  if (!legalWord || typeof legalWord !== 'string' || legalWord.trim() === '') {
+    throw new Error('Invalid input: A non-empty legal word string is required.');
+  }
+
+  // --- Start of New Retry Logic ---
+  const maxRetries = 3;
+  let baseDelay = 1000; // Start with a 1-second delay
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Attempt ${attempt}: Calling Gemini API for "${legalWord}"...`);
+
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-1.5-flash',
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 2048,
+          responseMimeType: 'application/json',
+        },
+      });
+
+      const prompt = `${JARGON_MEANING_PROMPT}\n\nLegal term to define:\n${legalWord}`;
+
+      const result = await model.generateContent(prompt);
+      const response = result.response;
+      const responseText = response.text();
+      
+      // If we get here, the API call was successful.
+      // We can now parse and return the result.
+      const cleanText = responseText.replace(/```json\s*|\s*```/g, '');
+      const parsedJson = JSON.parse(cleanText); // This can still fail if the model returns bad JSON
+      
+      console.log(`Attempt ${attempt}: Success!`);
+      return parsedJson; // Success! Exit the function.
+
+    } catch (error) {
+      console.error(`Attempt ${attempt} failed:`, error.message);
+
+      // IMPORTANT: Check for non-retryable errors (e.g., 400, 401, 403, 404)
+      // These are client errors that won't be fixed by retrying.
+      if (error.message.includes('[400') || error.message.includes('[401') || error.message.includes('[403') || error.message.includes('[404')) {
+        console.error("Non-retryable client error. Aborting.");
+        throw error; // Immediately stop and throw the original error
+      }
+
+      // If this was the last attempt, re-throw the error
+      if (attempt === maxRetries) {
+        console.error("All attempts failed.");
+        throw new Error(`Failed to get a response from Gemini for "${legalWord}" after ${maxRetries} attempts.`);
+      }
+
+      // Wait before the next attempt, with exponential backoff
+      console.log(`Waiting ${baseDelay}ms before next retry...`);
+      await sleep(baseDelay);
+      baseDelay *= 2; // Double the delay for the next attempt (e.g., 1s, 2s)
+    }
   }
 }

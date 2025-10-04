@@ -14,17 +14,6 @@ export default function Page() {
         </button>
       </div>
 
-
-      {/* <div className="mt-25 w-full pt-4 max-w-4xl p-6 bg-gray-900 rounded-lg shadow-lg">
-        <h2 className="text-3xl font-bold text-white">What You'll Get</h2>
-        <ul className="mt-4 list-disc list-inside text-white text-xl">
-          <li>Easy-to-understand explanations of legal terms and jargon</li>
-          <li>Concise summaries of lengthy contracts and documents</li>
-          <li>Accurate answers to your specific legal questions</li>
-          <li>A reliable legal consultant anytime you need one</li>
-        </ul>
-      </div> */}
-
       {/* Features Section */}
       <section id="features" className="py-20">
           <div className="container mx-auto px-6">
@@ -57,7 +46,6 @@ export default function Page() {
           </div>
       </section>
 
-      
 
     </div>
   );
