@@ -2,7 +2,7 @@
 import "./globals.css";
 import NavbarPage from "@/components/Navbar.jsx";
 import Navbar2 from "@/components/navbar2";
-import NavbarForFeatures from "@/components/NavbarForFeatures";
+// import NavbarForFeatures from "@/components/NavbarForFeatures";
 import React from "react";
 import { usePathname } from "next/navigation";
 
@@ -24,7 +24,7 @@ export default function RootLayout({ children }) {
         </footer>
       </body>}
       {showNavbarForFeatures && <body className="min-h-screen bg-gray-100">
-        <NavbarForFeatures />
+        {/* <NavbarForFeatures /> */}
         <main>{children}</main>
       </body>}
     </html>
