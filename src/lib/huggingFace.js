@@ -2,13 +2,19 @@ import { OpenAI } from "openai";
 
 const client = new OpenAI({
   baseURL: "https://router.huggingface.co/v1",
-  apiKey: process.env.HUGGINGFACE_API_KEY, 
+  apiKey: process.env.HUGGINGFACE_API_KEY,
 });
 
 const PROMPTS = {
-  documentAnalysis: `You are a legal document analysis assistant educator. Analyze the provided legal document and return a JSON object:
+  documentAnalysis: `You are a meticulous legal document analysis assistant. Your task is to analyze the provided text and return a single, valid JSON object with a comprehensive breakdown.
+
+CRITICAL INSTRUCTIONS:
+1. Your ENTIRE response MUST be a single, valid JSON object.
+2. DO NOT include any text or explanations outside of the JSON structure.
+3. The JSON object must have the exact following structure:
 {
-  "summary": "A concise 2–3 sentence summary of the document's purpose and main points.",
+  "notice": "IMPORTANT NOTICE: I am an AI assistant educator and cannot provide legal advice. The information provided is for educational purposes only and is based solely on the document you have provided. I am not a substitute for a qualified legal professional. Please consult with a licensed attorney for all your legal needs.",
+  "summary": "A detailed 3-4 sentence summary of the document's purpose, key parties, and primary points.",
   "keyClauses": [
     { "title": "Clause name", "explanation": "Plain-language meaning" }
   ],
@@ -16,12 +22,19 @@ const PROMPTS = {
     { "term": "Legal term", "definition": "Simple explanation" }
   ]
 }
+4. For the 'keyClauses' array, identify and explain the 3-5 most important statements, commitments, or qualifications in the document.
+5. For the 'jargonBuster' array, identify and define at least 3-5 technical, industry-specific, or potentially confusing terms from the text.
+6. Only analyze the document provided. Never suggest actions or opinions.
 
-CRITICAL RULES:
-1. Begin every response with: "IMPORTANT NOTICE: I am an AI assistant educator and cannot provide legal advice. The information provided is for educational purposes only and is based solely on the document you have provided. I am not a substitute for a qualified legal professional. Please consult with a licensed attorney for all your legal needs."
-2. Only analyze documents provided by the user - never generate general legal explanations.
-3. Never suggest strategies, actions, or whether clauses are good/bad.
-4. If no document is provided, state: "I can only analyze specific legal documents. Please share a document for analysis, and consult an attorney for general legal questions."`,
+EXAMPLE:
+If the document says: "The Lessee agrees to remit payment of $500 on the first of each month.", your output should include something like:
+"keyClauses": [
+  { "title": "Payment Obligation", "explanation": "The person leasing the item must pay $500 on the first day of every month." }
+],
+"jargonBuster": [
+  { "term": "Lessee", "definition": "The person or party who is renting a property or item from another." },
+  { "term": "Remit", "definition": "To send a payment." }
+]`,
 
   consultant: `You are a legal information assistant.
 
@@ -36,7 +49,7 @@ STRICT PROTOCOL:
   proofreading: `You are a legal document proofreading assistant educator. Return JSON:
 {
   "originalText": "...",
-  "correctedText": "...", 
+  "correctedText": "...",
   "corrections": [
     { "type": "spelling|grammar|clarity", "original": "...", "suggestion": "...", "explanation": "..." }
   ],
@@ -48,7 +61,20 @@ CRITICAL RULES:
 2. Only proofread documents provided by the user.
 3. Focus only on spelling, grammar, and clarity - do not analyze legal substance.
 4. Never suggest changes to legal meaning or strategy.
-5. If no document is provided, state you can only proofread specific text.`
+5. If no document is provided, state you can only proofread specific text.`,
+
+  jargonMeaning: `You are a legal dictionary assistant. For the given legal term, provide a detailed explanation in a single, valid JSON object.
+
+    CRITICAL INSTRUCTIONS:
+    1. Your ENTIRE response MUST be a single, valid JSON object.
+    2. DO NOT include any text, explanations, or numbering outside of the JSON.
+    3. The JSON object must have this exact structure:
+    {
+      "term": "The original word provided",
+      "definition": "A clear, concise definition of the term.",
+      "synonyms": ["A list", "of relevant", "synonyms"],
+      "example": "An example sentence using the term in a legal context."
+    }`
 };
 
 // Generic helper to query Mistral via OpenRouter
@@ -63,10 +89,15 @@ export async function queryHuggingFace(prompt) {
   return completion.choices[0].message.content;
 }
 
+
+
+
+
 // Exported functions for your routes
 export async function analyzeDocumentWithGroq(text) {
   const prompt = `${PROMPTS.documentAnalysis}\n\nDocument:\n${text}`;
   const output = await queryHuggingFace(prompt);
+  console.log("RAW AI OUTPUT:", output);
   return safeJSON(output);
 }
 
@@ -78,6 +109,13 @@ export async function getConsultantResponseGroq(message) {
 export async function proofreadTextWithGroq(text) {
   const prompt = `${PROMPTS.proofreading}\n\nText:\n${text}`;
   const output = await queryHuggingFace(prompt);
+  return safeJSON(output);
+}
+
+export async function checkJargonMeaning(word) {
+  const prompt = `${PROMPTS.jargonMeaning}\n\nWord is:\n${word}`;
+  const output = await queryHuggingFace(prompt);
+  console.log(output);
   return safeJSON(output);
 }
 

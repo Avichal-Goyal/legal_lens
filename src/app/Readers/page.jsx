@@ -1,10 +1,11 @@
 "use client";
 import React, { useState } from 'react';
 import Head from 'next/head';
-import { checkJargonMeaning } from '@/lib/gemini';
+import axios from 'axios';
+
 import { Search, FileText, BookOpen, Briefcase, ChevronRight, Scale } from 'lucide-react';
 
-// --- Mock Data (In a real app, this would come from your backend API) ---
+//  Mock Data (In a real app, this would come from your backend API) 
 
 const articles = [
     {
@@ -44,21 +45,35 @@ const featuredGlossaryTerms = [
 ];
 
 
-// --- The Main Page Component ---
+//  The Main Page Component 
 
 const ReadersPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResult, setSearchResult] = useState(null);
+    const [isLoading, setIsLoading] = useState(false); // Add loading state
+    const [error, setError] = useState(null);       // Add error state
 
-    const handleJargonSearch = (e) => {
+    const handleJargonSearch = async (e) => { // Make the function async
         e.preventDefault();
         if (!searchTerm.trim()) {
             setSearchResult(null);
             return;
         }
 
-        const response = checkJargonMeaning(searchTerm);
-        setSearchResult(response);
+        setIsLoading(true);
+        setError(null);
+        setSearchResult(null);
+
+        try {
+            // Await the response from the async function
+            const response = await axios.post("/api/readers/getJargonMeaning", { term: searchTerm });
+            setSearchResult(response.data);
+        } catch (err) {
+            setError("Failed to fetch the definition. Please try again.");
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -72,7 +87,7 @@ const ReadersPage = () => {
         <div className="min-h-screen bg-black text-gray-200 font-sans">
 
             <main className="container mx-auto px-4 py-12">
-            {/* --- Header and Search --- */}
+            {/*  Header and Search  */}
             <header className="text-center mb-12">
                 <h1 className="text-5xl font-extrabold text-white mb-4">Legal Knowledge Hub</h1>
                 <p className="text-lg text-gray-400 max-w-2xl mx-auto">
@@ -92,10 +107,10 @@ const ReadersPage = () => {
                 </div>
             </header>
 
-            {/* --- Main Content Grid --- */}
+            {/*  Main Content Grid  */}
             <h2 className="text-3xl font-bold text-white mb-6">Educational Articles & Guides</h2>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-            {/* --- Left Side: Articles --- */}
+            {/*  Left Side: Articles  */}
             <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
                 {articles.map((article, index) => (
                 <div key={index} className="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer">
@@ -114,7 +129,7 @@ const ReadersPage = () => {
                 ))}
             </div>
 
-            {/* --- Right Side: Sidebar --- */}
+            {/*  Right Side: Sidebar  */}
             <aside className="space-y-8 flex flex-col">
                 {/* Legal Jargon Buster */}
                 <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 flex flex-col flex-grow">
@@ -128,7 +143,7 @@ const ReadersPage = () => {
                     ))}
                 </div>
 
-                {/* --- NEW: Jargon Search Form --- */}
+                {/*  NEW: Jargon Search Form  */}
                 <form onSubmit={handleJargonSearch} className="mt-6">
                     <label htmlFor="jargon-search" className="sr-only">Search Jargon</label>
                     <div className="relative">
@@ -146,19 +161,53 @@ const ReadersPage = () => {
                     </div>
                 </form>
 
-                {/* --- NEW: Search Result Display --- */}
-                {searchResult && (
-                    <div className="mt-4 p-4 bg-gray-900/50 border border-gray-700 rounded-md animate-fade-in">
-                            <h4 className="font-semibold text-blue-400">{searchResult.term}</h4>
-                            <p className="text-white text-sm">{searchResult.definition}</p>
+                {/*  Search Result Display  */}
+{isLoading && (
+    <div className="mt-4 p-4 text-center text-gray-400">Loading...</div>
+)}
+
+{error && (
+    <div className="mt-4 p-4 bg-red-900/50 border border-red-700 rounded-md text-red-300">
+        {error}
+    </div>
+)}
+
+{/* Display result only if not loading, no error, and result exists */}
+{searchResult && !isLoading && !error && (
+    <div className="mt-4 p-4 bg-gray-900/50 border border-gray-700 rounded-md animate-fade-in space-y-3">
+        {/* Check if the API returned a structured error */}
+        {searchResult.error ? (
+            <p className="text-red-400">{searchResult.error}</p>
+        ) : (
+            <>
+                <div>
+                    <h4 className="font-semibold text-blue-400 text-lg capitalize">{searchResult.term}</h4>
+                    <p className="text-white text-sm">{searchResult.definition}</p>
+                </div>
+
+                {searchResult.synonyms && searchResult.synonyms.length > 0 && (
+                    <div>
+                        <h5 className="font-semibold text-gray-300 text-xs uppercase">Synonyms</h5>
+                        <p className="text-gray-400 text-sm italic">{searchResult.synonyms.join(', ')}</p>
                     </div>
                 )}
+                
+                {searchResult.example && (
+                     <div>
+                        <h5 className="font-semibold text-gray-300 text-xs uppercase">Example</h5>
+                        <p className="text-gray-400 text-sm">"{searchResult.example}"</p>
+                    </div>
+                )}
+            </>
+        )}
+    </div>
+)}
 
                 </div>
             </aside>
             </div>
 
-            {/* --- Call to Action Banner --- */}
+            {/*  Call to Action Banner  */}
             <div className="mt-20 text-center p-8 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-lg">
                 <h2 className="text-3xl font-bold text-white">Bring Clarity to Your Own Documents</h2>
                 <p className="text-indigo-200 mt-2 mb-6">Ready to move from theory to practice? Upload your document and let Legal Lens do the hard work.</p>

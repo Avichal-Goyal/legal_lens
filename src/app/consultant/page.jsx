@@ -89,14 +89,14 @@ export default function ConsultantPage() {
         );
         continue;
       }
-      
+
       // Check if this is a table section
       if (section.includes('|') && section.includes('-')) {
         const lines = section.split('\n');
         const headerLine = lines[0];
         const separatorLine = lines[1];
         const dataLines = lines.slice(2);
-        
+
         if (headerLine && separatorLine && dataLines.length > 0) {
           const headers = headerLine.split('|').filter(cell => cell.trim() !== '');
           elements.push(
@@ -105,8 +105,8 @@ export default function ConsultantPage() {
                 <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
                     {headers.map((header, idx) => (
-                      <th 
-                        key={`th-${idx}`} 
+                      <th
+                        key={`th-${idx}`}
                         className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
                       >
                         {header.trim()}
@@ -120,8 +120,8 @@ export default function ConsultantPage() {
                     return (
                       <tr key={`tr-${rowIdx}`} className={rowIdx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800'}>
                         {cells.map((cell, cellIdx) => (
-                          <td 
-                            key={`td-${rowIdx}-${cellIdx}`} 
+                          <td
+                            key={`td-${rowIdx}-${cellIdx}`}
                             className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300"
                           >
                             {cell.trim()}

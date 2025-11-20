@@ -37,22 +37,46 @@ function DocumentAnalyzer() {
         inputRef.current.click();
     };
 
+    // const handleSubmit = async (event) => {
+    //     event.preventDefault();
+
+    //     alert(selectedFile ? `Uploading: ${selectedFile.name}` : "No file selected");
+    //     const fileText = await selectedFile.text();
+
+    //     // Send fileText to backend for analysis
+    //     const response = await axios.post('/api/analyze', { text: fileText });
+
+    //     console.log('Analysis response:', response.data);
+
+    //     localStorage.setItem("analysisResult", JSON.stringify(response.data));
+
+    //     // Redirect to results page
+    //     router.push("/analysisResult");
+    // };
     const handleSubmit = async (event) => {
-        event.preventDefault();
+    event.preventDefault();
 
-        alert(selectedFile ? `Uploading: ${selectedFile.name}` : "No file selected");
-        const fileText = await selectedFile.text();
+    if (!selectedFile) {
+        alert("Please select a file before uploading!");
+        return;
+    }
 
-        // Send fileText to backend for analysis
-        const response = await axios.post('/api/analyze', { text: fileText });
+    const formData = new FormData();
+    formData.append("file", selectedFile);
 
-        console.log('Analysis response:', response.data);
+    try {
+        const response = await axios.post("/api/analyze", formData);
+
+        console.log("Analysis response:", response.data);
 
         localStorage.setItem("analysisResult", JSON.stringify(response.data));
-
-        // Redirect to results page
         router.push("/analysisResult");
-    };
+    } catch (error) {
+        console.error("Upload error:", error);
+        alert("Failed to analyze document. Check console for details.");
+    }
+};
+
 
     return (
         <div className="flex md:flex-row-reverse w-full">
