@@ -18,7 +18,7 @@ export default function Navbar() {
           <Link href="/" className="text-gray-300 hover:text-blue-400 transition-colors">Home</Link>
           <Link href="/Readers" className="text-gray-300 hover:text-blue-400 transition-colors">Readers</Link>
           <Link href="/Dashboard" className="text-gray-300 hover:text-blue-400 transition-colors">Dashboard</Link>
-          <Link href="/login" className="text-gray-300 hover:text-blue-400 transition-colors">Login</Link>
+          <Link href="/userSetup/sign-in" className="text-gray-300 hover:text-blue-400 transition-colors">Login</Link>
         </nav>
       </div>
     </header>

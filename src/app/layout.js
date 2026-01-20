@@ -9,7 +9,7 @@ import { usePathname } from "next/navigation";
 
 export default function RootLayout({ children }) {
   const pathname = usePathname();
-  const showNavbarForUserSetup = pathname === "/login" || pathname === "/signup";
+  const showNavbarForUserSetup = pathname === "/userSetup/sign-in" || pathname === "userSetup/sign-up";
   const showNavbarForFeatures = pathname === "/consultant" || pathname ==="/analysisResult";
   return (
     <html lang="en">
