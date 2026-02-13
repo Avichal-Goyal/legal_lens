@@ -10,7 +10,7 @@ import { usePathname } from "next/navigation";
 export default function RootLayout({ children }) {
   const pathname = usePathname();
   const showNavbarForUserSetup = pathname === "/userSetup/sign-in" || pathname === "userSetup/sign-up";
-  const showNavbarForFeatures = pathname === "/consultant" || pathname ==="/analysisResult";
+  const showNavbarForFeatures = pathname === "/consultant" || pathname ==="/analysisResult" || pathname === "/testAnalyze" || pathname === "/testAnalyze2";
   return (
     <html lang="en">
       {!showNavbarForFeatures && <body className="min-h-screen bg-black">

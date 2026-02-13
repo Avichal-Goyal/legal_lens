@@ -37,45 +37,36 @@ function DocumentAnalyzer() {
         inputRef.current.click();
     };
 
-    // const handleSubmit = async (event) => {
-    //     event.preventDefault();
-
-    //     alert(selectedFile ? `Uploading: ${selectedFile.name}` : "No file selected");
-    //     const fileText = await selectedFile.text();
-
-    //     // Send fileText to backend for analysis
-    //     const response = await axios.post('/api/analyze', { text: fileText });
-
-    //     console.log('Analysis response:', response.data);
-
-    //     localStorage.setItem("analysisResult", JSON.stringify(response.data));
-
-    //     // Redirect to results page
-    //     router.push("/analysisResult");
-    // };
     const handleSubmit = async (event) => {
-    event.preventDefault();
+        event.preventDefault();
 
-    if (!selectedFile) {
-        alert("Please select a file before uploading!");
-        return;
-    }
+        if (!selectedFile) {
+            alert("Please select a file before uploading!");
+            return;
+        }
 
-    const formData = new FormData();
-    formData.append("file", selectedFile);
+        const formData = new FormData();
+        formData.append("file", selectedFile);
 
-    try {
-        const response = await axios.post("/api/analyze", formData);
+        try {
+            const response = await axios.post("/api/analyze", formData);
+            console.log(response.data);
 
-        console.log("Analysis response:", response.data);
+            console.log("Analysis response:", response.data);
 
-        localStorage.setItem("analysisResult", JSON.stringify(response.data));
-        router.push("/analysisResult");
-    } catch (error) {
-        console.error("Upload error:", error);
-        alert("Failed to analyze document. Check console for details.");
-    }
-};
+            const storageData = {
+                ...response.data,
+                fileName: selectedFile.name
+            };
+
+            localStorage.setItem("testAnalyze2", JSON.stringify(storageData));
+
+            router.push("/testAnalyze2");
+        } catch (error) {
+            console.error("Upload error:", error);
+            alert("Failed to analyze document. Check console for details.");
+        }
+    };
 
 
     return (

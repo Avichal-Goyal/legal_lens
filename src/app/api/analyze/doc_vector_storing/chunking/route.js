@@ -12,7 +12,7 @@ function cleanLegalChunk(text) {
 export async function POST(request) {
 
     // starting to implement the RAG logic in making chunks of the docs and storing them in a way so to make vector search possible
-    
+
     const text = await request.json().then(data => data.text);
 
     // creating a text splitter object
@@ -43,10 +43,10 @@ export async function POST(request) {
         if (pageNumMatch) {
             lastSeenPage = pageNumMatch[1];
         } else {
-            content = `--- PAGE ${lastSeenPage} (cont.) --- ${content}`;
+            text = `--- PAGE ${lastSeenPage} (cont.) --- ${text}`;
         }
 
-        return cleanLegalChunk(content);
+        return cleanLegalChunk(text);
     })
     .filter(chunk => chunk.length > 50)
 
