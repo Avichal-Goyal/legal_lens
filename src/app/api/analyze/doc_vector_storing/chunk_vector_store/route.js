@@ -41,7 +41,8 @@ export async function POST (request) {
             return NextResponse.json({
                 success: true,
                 message: "Data stored",
-                count: rows.length
+                count: rows.length,
+                status: 200
             });
     } catch (error) {
         console.error("Supabase Insertion Error:", error.message);

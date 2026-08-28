@@ -13,16 +13,18 @@ export async function POST(request) {
 
         const queryVector = await query_to_vector(rephrasedQuery);
         console.log(`Rephrased Query: ${rephrasedQuery}`)
-        console.log("DEBUG: Searching for file:", fileName); //
-        console.log("DEBUG: Query Vector Sample:", queryVector.slice(0, 5));
+        console.log("DEBUG: Searching for file:", fileName);
+        console.log("DEBUG: Query Vector Sample:", queryVector);
 
         // check fot the chunks similar to this query
         const { data: documents, error } = await supabase.rpc('match_legal_docs', {
             query_embedding: queryVector,
-            match_threshold: 0.2,
-            match_count: 5,
+            match_threshold: 0.4,
+            match_count: 8,
             file_filter: fileName
         })
+        if(error) console.error(error);
+        console.log(documents?.length)
 
         if(!documents || documents.length === 0) {
             console.log("NO CHUNK RETRIEVED BY SUPABASE")
@@ -46,8 +48,6 @@ export async function POST(request) {
         }));
 
         const uniquePages = [...new Set(documents.map(doc => doc.metadata?.page_number))];
-
-        
 
         // send the query with the related chunks to the AI model for the answer
 

@@ -496,7 +496,7 @@ function BeautifulAnalysisPage() {
                                     )}
                                 </div>
                                 
-                                <div 
+                                <div
                                     ref={documentViewerRef}
                                     className="prose prose-invert prose-sm max-w-none text-gray-300 bg-slate-900/50 rounded-xl p-6 border border-slate-700/50"
                                 >

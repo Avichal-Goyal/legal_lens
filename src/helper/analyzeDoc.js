@@ -55,7 +55,7 @@ export async function analyze_doc_using_groq(chunks) {
     try {
         // Ensure we handle different chunk structures
         const allChunks = Array.isArray(chunks) ? chunks : [];
-        
+
         // FIX 1: Extract the first 2-3 chunks to get the "Global Context" (Title/Parties)
         // const globalContext = allChunks.slice(0, 2).map(c => c.content || c.pageContent || c).join(" ");
 
@@ -64,7 +64,7 @@ export async function analyze_doc_using_groq(chunks) {
 
         for (let i = 0; i < allChunks.length; i += batch_size) {
             const batch = allChunks.slice(i, i + batch_size);
-            
+
             // FIX 2: Prepend the Global Context to every batch so the AI knows the document identity
             const batchText = `CHUNK TO ANALYZE:\n` + batch.map(c => c.content || c.pageContent || c).join("\n");
 

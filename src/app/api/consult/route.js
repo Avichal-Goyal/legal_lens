@@ -86,7 +86,7 @@
 // }
 import { NextResponse } from 'next/server';
 import { getConsultantResponseGroq } from '@/lib/huggingFace';
-import dbConnect from '@/lib/mongodb';
+import {dbConnect} from '@/lib/mongodb';
 import ChatSession from '@/lib/models/chatModel';
 import { v4 as uuidv4 } from 'uuid';
 

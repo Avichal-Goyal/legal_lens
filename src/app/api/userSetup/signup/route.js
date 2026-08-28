@@ -1,4 +1,4 @@
-import dbConnect from '@/lib/mongodb';
+import { dbConnect } from '@/lib/mongodb';
 import User from '@/lib/models/userModel';
 import { NextResponse } from 'next/server';
 import bcryptjs from 'bcryptjs';

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server.js";
-import dbConnect from "@/lib/mongodb.js";
+import {dbConnect} from "@/lib/mongodb.js";
 import Law from '@/lib/models/lawModel.js';
 export async function GET(request) {
   try {

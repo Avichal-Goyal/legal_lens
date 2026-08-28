@@ -16,14 +16,28 @@ export async function POST(request) {
     const text = await request.json().then(data => data.text);
 
     // creating a text splitter object
-
-
-
     const splitter = new RecursiveCharacterTextSplitter({
         chunkSize: 1000,
         chunkOverlap: 200,
     });
     // chunkOverlap is for the case if any sentence is cut in half, so when it considers the other half of the sentence for the next chunk it will include the first half of that sentence in the new chunk again so that the AI does not loose the context of the document or para.
+
+    const pages = text.split(/--- PAGE \d+ ---/).filter(p => p.trim().length > 0);
+
+    let finalChunks = [];
+
+    for(let i=0; i<pages.length; i++) {
+        const pageNum = i + 1;
+        const pageContent = pages[i];
+
+        const subChunks = await splitter.createDocuments([pageContent]);
+
+        subChunks.forEach((doc, index) => {
+            let chunkText = doc.pageContent;
+
+            const header = index === 0 ? `PAGE ${pageNum} ---` : `--- PAGE ${pageNum} (cont.) ---`;
+        })
+    }
 
     // creating chunks
     // this takes the rawText and returns an array of Document Objects

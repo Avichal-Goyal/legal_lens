@@ -59,9 +59,9 @@ function DocumentAnalyzer() {
                 fileName: selectedFile.name
             };
 
-            localStorage.setItem("testAnalyze2", JSON.stringify(storageData));
+            localStorage.setItem("testAnalyze", JSON.stringify(storageData));
 
-            router.push("/testAnalyze2");
+            router.push("/testAnalyze");
         } catch (error) {
             console.error("Upload error:", error);
             alert("Failed to analyze document. Check console for details.");
