@@ -11,7 +11,7 @@ import axios from "axios";
 import ReactMarkdown from 'react-markdown';
 
 
-export default function AIConsultant({filename}) {
+export default function AIConsultant({documentId, filename}) {
     const [input, setInput] = useState("")
     const [messages, setMessages] = useState([
         { role: 'ai', text: 'Ready to analyze. What specifically should I look for?'}
@@ -55,11 +55,11 @@ export default function AIConsultant({filename}) {
             const response = await axios.post("/api/analyze/consultant_query", {
                 query: input,
                 history: messages,
-                fileName: filename
+                documentId: documentId
             });
 
             const assistantMsg = {
-                sender: 'bot',
+                role: 'ai',
                 text: response.data.answer,
                 sources: response.data.sources || []
             };
@@ -71,7 +71,7 @@ export default function AIConsultant({filename}) {
             setIsThinking(false);
             console.error("Error in Assistant reply", error);
             setMessages(prev => [...prev, {
-                sender: 'bot',
+                role: 'ai',
                 text: 'Sorry, I encountered an error. Please try again.',
                 sources: []
             }]);

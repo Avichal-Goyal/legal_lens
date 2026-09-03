@@ -11,13 +11,31 @@ export async function POST(request) {
         await dbConnect();
         const { username, email, password } = await request.json();
 
-        const existedUser = await User.findOne({email});
-        if(existedUser){
-            return NextResponse.json(
-                { error: 'Redirecting to login...' , redirect: '/login' },
-                { status: 400 } // not an error anymore
-            );
+        const existingEmailUser = await User.findOne({ email });
+
+        if (existingEmailUser) {
+        return NextResponse.json(
+            {
+                error: "An account with this email already exists.",
+                code: "EMAIL_EXISTS",
+                redirectTo: "/userSetup/sign-in",
+            },
+            { status: 409 }
+        );
         }
+
+        const existingUsernameUser = await User.findOne({ username });
+
+        if (existingUsernameUser) {
+        return NextResponse.json(
+            {
+                error: "Username is already taken.",
+                code: "USERNAME_EXISTS",
+            },
+            { status: 409 }
+        );
+        }
+
 
         const salt = await bcryptjs.genSalt(10);
         const hashedPassword = await bcryptjs.hash(password, salt);
@@ -31,9 +49,10 @@ export async function POST(request) {
         );
     }
     catch (error) {
-        console.error('Error in signup route:', error);
+        console.error("Error in signup route:", error);
+
         return NextResponse.json(
-            { error: 'Internal Server Error' },
+            { error: "Internal Server Error" },
             { status: 500 }
         );
     }

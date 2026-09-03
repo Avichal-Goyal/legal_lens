@@ -1,19 +1,36 @@
-import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
+import { NextResponse } from "next/server";
 
-export function clientMiddleware(req) {
-    const path = req.nextUrl.pathname;
-    const isPublicPath = path === '/login' || path === '/signup' || path === '/verifyemail';
+export async function middleware(request) {
+    const token = await getToken({
+        req: request,
+        secret: process.env.AUTH_SECRET,
+    });
 
-    const token = req.cookies.get('token')?.value || '';
+    if (!token) {
+        const signInUrl = new URL("/userSetup/sign-in", request.url);
 
-    if(isPublicPath && token) {
-        return NextResponse.redirect(new URL('/profile', req.nextUrl));
+        signInUrl.searchParams.set(
+        "callbackUrl",
+        request.nextUrl.pathname
+        );
+
+        return NextResponse.redirect(signInUrl);
     }
 
-    if(!isPublicPath && !token) {
-        return NextResponse.redirect(new URL('/login', req.nextUrl));
-    }
+    return NextResponse.next();
 }
+
 export const config = {
-    matcher: ["/proofReader", "/consultant", "/Readers", "/bookOpen", "/fileText", "/dashboard", "/login", "/signup"],
+    matcher: [
+        "/Dashboard/:path*",
+        "/fileText/:path*",
+        "/consultant/:path*",
+        "/Readers/:path*",
+        "/bookOpen/:path*",
+        "/proofReader/:path*",
+        "/testAnalyze/:path*",
+        "/testAnalyze2/:path*",
+        "/analysisResult/:path*",
+    ],
 };

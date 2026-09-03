@@ -139,5 +139,5 @@ export const authOptions = {
         strategy: "jwt",
         maxAge: 30 * 24 * 60 * 60,
     },
-    secret: process.env.AUTH_SECRET,
+    secret: process.env.TOKEN_SECRET,
 };

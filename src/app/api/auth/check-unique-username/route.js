@@ -1,6 +1,6 @@
 import { dbConnect } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
-import UserModel from "@/lib/models/userModel";
+import User from "@/lib/models/userModel";
 import { z } from "zod";
 import { usernameValidation } from "@/schemas/signUpSchema";
 
@@ -35,9 +35,9 @@ export async function GET (request) {
 
         const {username} = validationWithZod.data
 
-        const existingVerifiedUser = await User.findOne({ username, isVerified: true})
+        const existingUser = await User.findOne({ username })
 
-        if(existingVerifiedUser) {
+        if(existingUser) {
             return NextResponse.json({
                 success: false,
                 message: 'Username is already taken',

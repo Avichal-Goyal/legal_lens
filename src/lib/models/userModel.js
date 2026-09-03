@@ -1,12 +1,11 @@
 import mongoose, { Schema, model, models } from "mongoose";
-import bcrypt from "bcryptjs";
 
 const userSchema = new Schema(
     {
         username: {
             type: String,
             required: true,
-            unique: false
+            unique: true
         },
         image: {
             type: String,
@@ -14,7 +13,8 @@ const userSchema = new Schema(
         },
         email: {
             type: String,
-            required: true
+            required: true,
+            unique: true
         },
         password: {
             type: String,
@@ -22,11 +22,11 @@ const userSchema = new Schema(
         },
         verifyCode: {
             type: String,
-            required: true
+            required: false
         },
         verifyCodeExpiry: {
             type: Date,
-            required: true
+            required: false
         },
         isVerified: {
             type: Boolean,
@@ -55,14 +55,6 @@ const userSchema = new Schema(
         timestamps: true
     }
 );
-
-
-userSchema.pre("save", async function (next) {
-    if (this.isModified("password")) {
-        this.password = await bcrypt.hash(this.password, 10);
-    }
-    next();
-});
 
 const UserModel = models.UserModel || model("UserModel", userSchema)
 

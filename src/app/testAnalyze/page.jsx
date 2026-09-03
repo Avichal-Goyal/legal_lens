@@ -22,6 +22,7 @@ export default function Home() {
     const [clauses, setClauses] = useState([]);
     const [filename, setfilename] = useState('');
     const [docText, setDocText] = useState('');
+    const [documentId, setDocumentId] = useState('');
 
     useEffect(() => {
         const data = localStorage.getItem('testAnalyze');
@@ -33,10 +34,9 @@ export default function Home() {
 
         try {
             const parsed = JSON.parse(data);
-            
             if (parsed) {
                 setfilename(parsed.fileName || 'Legal Document');
-
+                setDocumentId(parsed.documentId);
                 setSummary(parsed.summary);
                 setClauses(parsed.keyClauses || []);
                 setJargons(parsed.jargonBuster || []);
@@ -71,7 +71,8 @@ export default function Home() {
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel defaultSize="40%">
-                <AIConsultant filename={filename}/>
+                <AIConsultant documentId={documentId}
+                filename={filename}/>
             </ResizablePanel>
             </ResizablePanelGroup>
         </main>

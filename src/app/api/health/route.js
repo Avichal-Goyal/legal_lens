@@ -1,23 +1,57 @@
-import { NextResponse } from 'next/server.js';
-import {dbConnect} from '@/lib/mongodb';
+import { NextResponse } from "next/server";
+import { dbConnect } from "@/lib/mongodb";
 
 export async function GET() {
+  const startedAt = Date.now();
+  const timestamp = new Date().toISOString();
+
   try {
+    const mongoose = await dbConnect();
 
-    await dbConnect();
+    // Confirms that the database is reachable now, not merely cached.
+    await mongoose.connection.db.admin().ping();
 
-    return NextResponse.json({
-      status: 'OK',
-      timestamp: new Date().toISOString(),
-      database: 'Connected'
-    }, { status: 200 });
+    return NextResponse.json(
+      {
+        status: "ok",
+        timestamp,
+        durationMs: Date.now() - startedAt,
+        checks: {
+          mongodb: "ok",
+        },
+      },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
+    );
   } catch (error) {
-    console.error('Health check failed:', error);
-    return NextResponse.json({
-      status: 'Error',
-      timestamp: new Date().toISOString(),
-      database: 'Disconnected',
-      error: error.message
-    }, { status: 500 });
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "health_check_failed",
+        timestamp,
+        error: error instanceof Error ? error.message : "Unknown error",
+      })
+    );
+
+    return NextResponse.json(
+      {
+        status: "error",
+        timestamp,
+        durationMs: Date.now() - startedAt,
+        checks: {
+          mongodb: "error",
+        },
+      },
+      {
+        status: 503,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
+    );
   }
 }

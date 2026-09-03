@@ -5,6 +5,19 @@ const client = new OpenAI({
   apiKey: process.env.HUGGINGFACE_API_KEY,
 });
 
+const groqClient = new OpenAI({
+  baseURL: "https://api.groq.com/openai/v1",
+  apiKey: process.env.GROQ_API_KEY,
+});
+
+// Helper function to pause execution during busy spikes
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const MODELS = [
+  "deepseek-ai/DeepSeek-R1",
+  "meta-llama/Meta-Llama-3-8B-Instruct"
+];
+
 const PROMPTS = {
   documentAnalysis: `You are a meticulous legal document analysis assistant. Your task is to analyze the provided text and return a single, valid JSON object with a comprehensive breakdown.
 
@@ -105,35 +118,58 @@ If the document says: "The Lessee agrees to remit payment of $500 on the first o
 
 };
 
-// Generic helper to query Mistral via OpenRouter
-export async function queryHuggingFace(prompt) {
-  const completion = await client.chat.completions.create({
-    model: "mistralai/Mistral-7B-Instruct-v0.2:featherless-ai",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.1,
-    max_tokens: 4096,
-  });
-
-  return completion.choices[0].message.content;
+function cleanModelOutput(text) {
+  if (!text) return "";
+  // Removes <think>...</think> blocks and any leftover spacing
+  return text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 }
 
-export async function docQueryAssistant (prompt, query, context) {
-  const completion = await client.chat.completions.create({
-    model: "mistralai/Mistral-7B-Instruct-v0.2:featherless-ai",
-    messages: [
-      {
-        role: "system",
-        content: prompt, // the prompt written to explain the role,etc to the AI model
-      },
-      {
-        role: "user",
-        content: `Context: ${context}\n\nQuestion: ${query}`, // this contain our original user question
-      },
-    ],
-    temperature: 0.1
-  });
+// Generic helper to query Mistral via OpenRouter
+export async function queryHuggingFace(prompt) {
+  for (const model of MODELS) {
+    try {
+      const completion = await client.chat.completions.create({
+        model: model,
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.1,
+        max_tokens: 4096,
+      });
+      return completion.choices[0].message.content;
+    } catch (error) {
+      if (error.message?.includes("busy") || error.status === 400 || error.status === 503) {
+        console.warn(`[HF Router] ${model} is busy. Waiting 2 seconds...`);
+        await delay(2000);
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error("All Hugging Face models are currently busy. Please try again shortly.");
+}
 
-  return completion.choices[0].message.content;
+export async function docQueryAssistant(prompt, query, context) {
+  for (const model of MODELS) {
+    try {
+      const completion = await client.chat.completions.create({
+        model: model,
+        messages: [
+          { role: "system", content: prompt },
+          { role: "user", content: `Context: ${context}\n\nQuestion: ${query}` },
+        ],
+        temperature: 0.1
+      });
+      const rawOutput = completion.choices[0].message.content;
+      return cleanModelOutput(rawOutput);
+    } catch (error) {
+      if (error.message?.includes("busy") || error.status === 400 || error.status === 503) {
+        console.warn(`[HF Router] ${model} is busy. Waiting 2 seconds...`);
+        await delay(2000);
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error("All Hugging Face models are currently busy. Please try again shortly.");
 }
 
 
@@ -164,13 +200,28 @@ export async function checkJargonMeaning(word) {
   console.log(output);
   return safeJSON(output);
 }
-
 export async function rephraseUserQuery(query, history) {
-  const prompt = `${PROMPTS.queryRephrasing}\n\nQuery is: ${query}\nChat History is: ${history}`
+  const formattedHistory = Array.isArray(history)
+    ? history.map(msg => `${msg.role.toUpperCase()}: ${msg.text}`).join('\n')
+    : "No previous history.";
 
-  const output = await queryHuggingFace(prompt);
-  console.log(output);
-  return output;
+  const prompt = `${PROMPTS.queryRephrasing}\n\nChat History:\n${formattedHistory}\n\nCurrent Query: ${query}`;
+
+  try {
+    const completion = await groqClient.chat.completions.create({
+      model: "llama-3.1-8b-instant", // Groq's ultra-fast production model
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.1,
+      max_tokens: 500,
+    });
+
+    const output = completion.choices[0].message.content;
+    console.log("Rephrased Query:", output);
+    return output;
+  } catch (error) {
+    console.error("Groq rephrasing failed, falling back to original query:", error);
+    return query; // Fallback to raw query if Groq errors out
+  }
 }
 
 export async function getDocQueryResponse(query, context) {

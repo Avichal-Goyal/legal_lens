@@ -5,11 +5,12 @@ import Navbar2 from "@/components/navbar2";
 // import NavbarForFeatures from "@/components/NavbarForFeatures";
 import React from "react";
 import { usePathname } from "next/navigation";
+import { Toaster } from "sonner";
 
 
 export default function RootLayout({ children }) {
   const pathname = usePathname();
-  const showNavbarForUserSetup = pathname === "/userSetup/sign-in" || pathname === "userSetup/sign-up";
+  const showNavbarForUserSetup = pathname === "/userSetup/sign-in" || pathname === "/userSetup/sign-up";
   const showNavbarForFeatures = pathname === "/consultant" || pathname ==="/analysisResult" || pathname === "/testAnalyze" || pathname === "/testAnalyze2";
   return (
     <html lang="en">
@@ -22,10 +23,12 @@ export default function RootLayout({ children }) {
             <p>&copy; {new Date().getFullYear()} Legal Lens. All rights reserved.</p>
           </div>
         </footer>
+        <Toaster position="top-right" richColors />
       </body>}
       {showNavbarForFeatures && <body className="min-h-screen bg-gray-100">
         {/* <NavbarForFeatures /> */}
         <main>{children}</main>
+        <Toaster position="top-right" richColors />
       </body>}
     </html>
   )

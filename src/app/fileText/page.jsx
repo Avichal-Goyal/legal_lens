@@ -56,7 +56,8 @@ function DocumentAnalyzer() {
 
             const storageData = {
                 ...response.data,
-                fileName: selectedFile.name
+                fileName: response.data.fileName || selectedFile.name,
+                documentId: response.data.documentId,
             };
 
             localStorage.setItem("testAnalyze", JSON.stringify(storageData));

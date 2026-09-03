@@ -1,187 +1,278 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z  from "zod"
-import Link from "next/link"
-import { toast } from "sonner"
-import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
-import axios, { AxiosError } from "axios"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
-import { signUpSchema } from "@/schemas/signUpSchema"
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
+import { signUpSchema } from "@/schemas/signUpSchema";
+import {
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const SignUpPage = () => {
-    const [username, setUsername] = useState('')
-    const [usernameMessage, setUsernameMessage] = useState('')
-    const [isCheckingUsername, setIsCheckingUsername] = useState(false)
-    const [isSubmitting, setIsSubmitting] = useState(false)
-
     const router = useRouter();
 
+    const [username, setUsername] = useState("");
+    const [usernameMessage, setUsernameMessage] = useState("");
+    const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+    const [isUsernameAvailable, setIsUsernameAvailable] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const form = useForm({
         resolver: zodResolver(signUpSchema),
         defaultValues: {
-            username: '',
-            email: '',
-            password: ''
-        }
-    })
+        username: "",
+        email: "",
+        password: "",
+        },
+    });
 
     useEffect(() => {
+        const trimmedUsername = username.trim();
+
+        if (!trimmedUsername) {
+        setUsernameMessage("");
+        setIsUsernameAvailable(null);
+        return;
+        }
+
+        const controller = new AbortController();
+
         const checkUniqueUsername = async () => {
-            try {
-                if(username) {
-                    setIsCheckingUsername(true)
-                    setUsernameMessage('')
+        try {
+            setIsCheckingUsername(true);
+            if (trimmedUsername.length < 3) {
+                setUsernameMessage("Username must be at least 3 characters.");
+                setIsUsernameAvailable(false);
+                setIsCheckingUsername(false);
+                return;
+            }
+            setUsernameMessage("");
 
-                    const response = await axios.get(`/api/auth/check-unique-username?username=${username}`)
-                    let message = response.data.message;
-                    setUsernameMessage(message)
+            const response = await axios.get(
+            `/api/auth/check-unique-username?username=${encodeURIComponent(
+                trimmedUsername
+            )}`,
+            { signal: controller.signal }
+            );
 
-                }
-            } catch (error) {
-                let message = 'An error occurred.';
-                if (error instanceof AxiosError) {
-                    // Get the error message from the API response
-                    message = error.response?.data?.message || 'Error checking username.';
-                } else if (error instanceof Error) {
-                    message = error.message;
-                }
-                setUsernameMessage(message);
-            } finally {
-                setIsCheckingUsername(false)
+            setUsernameMessage(response.data.message);
+            setIsUsernameAvailable(response.data.success);
+        } catch (error) {
+            if (error.code === "ERR_CANCELED") {
+            return;
+            }
+
+            const message =
+            error.response?.data?.message || "Could not check username.";
+
+            setUsernameMessage(message);
+            setIsUsernameAvailable(false);
+        } finally {
+            if (!controller.signal.aborted) {
+            setIsCheckingUsername(false);
             }
         }
+        };
 
         checkUniqueUsername();
-    }, [username])
 
+        return () => controller.abort();
+    }, [username]);
 
     const onSubmit = async (data) => {
+        if (isUsernameAvailable === false) {
+        toast.error("Choose another username", {
+            description: "This username is already taken.",
+        });
+        return;
+        }
+
         try {
-            setIsSubmitting(true)
-            const response = await axios.post("/api/auth/register", data)
-            toast.success("Success", {
-                description: response.data.message,
-            })
-            router.replace(`/verify/${username}`);
+        setIsSubmitting(true);
 
-            setIsSubmitting(false);
+        const response = await axios.post("/api/userSetup/signup", data);
+
+        toast.success("Account created", {
+            description: response.data.message,
+        });
+
+        router.replace("/userSetup/sign-in");
         } catch (error) {
-            console.error("Error in user signup", error);
+            if (error.response?.data?.code === "EMAIL_EXISTS") {
+                toast.error("Account already exists", {
+                description: "Please sign in with your existing account.",
+                });
 
-            let errorMessage = "Registration failed. Please try again.";
-            if (error instanceof AxiosError) {
-                errorMessage = error.response?.data?.message || "Server error";
-            } else if (error instanceof Error) {
-                errorMessage = error.message;
+                router.replace(error.response.data.redirectTo);
+                return;
             }
 
-            toast.error("Failed", {
-                description: errorMessage,
+            const message =
+                error.response?.data?.error ||
+                error.response?.data?.message ||
+                "Registration failed. Please try again.";
+
+            toast.error("Signup failed", {
+                description: message,
             });
         } finally {
-            setIsSubmitting(false)
+            setIsSubmitting(false);
         }
-    }
-
+    };
 
     return (
-        <div className="flex justify-center items-center min-h-screen bg-gray-100">
-            <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
-                <div className="text-center">
-                    <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-6">Legal Clarity, Delivered.</h1>
-                    <p className="mb-4">Sign in to view critical data and secure documentation.</p>
-                </div>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <FormField
-                            control={form.control}
-                            name="username"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Username</FormLabel>
-                                <FormControl>
-                                    <Input
-                                    placeholder="username"
-                                    {...field}
-                                    onChange = {(e) => {
-                                        field.onChange(e)
-                                        debounced(e.target.value)
-                                    }}
-                                    />
-                                </FormControl>
-                                <FormDescription>This is your public display name.</FormDescription>
-                                {isCheckingUsername && <Loader2 className="animate-spin" />}
-                                <p className={`text-sm ${usernameMessage === "Username is unique" ? 'text-green-500' : 'text-red-500'}`}>
-                                    test {usernameMessage}
-                                </p>
-                                <FormMessage />
-                                </FormItem>
-                            )}
+        <div className="flex min-h-screen items-center justify-center bg-black">
+        <div className="w-full max-w-md space-y-8 rounded-lg border border-zinc-700 bg-zinc-900 p-8 shadow-2xl">
+            <div className="text-center">
+            <h1 className="mb-2 text-4xl font-extrabold tracking-tight text-zinc-50 sm:text-5xl">
+                Legal Clarity, Delivered.
+            </h1>
+            <p className="text-zinc-400">
+                Create your account to access secure legal tools and documentation.
+            </p>
+            </div>
+
+            <Form {...form}>
+            <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6 text-white"
+            >
+                <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                        <Input
+                        placeholder="legal_lens_user"
+                        autoComplete="username"
+                        {...field}
+                        onChange={(event) => {
+                            field.onChange(event);
+                            setUsername(event.target.value);
+                        }}
+                        className="border-zinc-700 bg-zinc-800 text-zinc-50 placeholder:text-zinc-400"
                         />
-                        <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Email</FormLabel>
-                                <FormControl>
-                                    <Input
-                                    placeholder="email"
-                                    {...field}
-                                    />
-                                </FormControl>
-                                <FormDescription>This is your public display name.</FormDescription>
-                                <FormMessage />
-                                </FormItem>
-                            )}
+                    </FormControl>
+
+                    <FormDescription className="text-zinc-400">
+                        Letters, numbers, and underscores only.
+                    </FormDescription>
+
+                    {isCheckingUsername && (
+                        <div className="flex items-center gap-2 text-sm text-zinc-400">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Checking username...
+                        </div>
+                    )}
+
+                    {!isCheckingUsername && usernameMessage && (
+                        <p
+                        className={`text-sm ${
+                            isUsernameAvailable
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                        >
+                        {usernameMessage}
+                        </p>
+                    )}
+
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+
+                <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                        <Input
+                        type="email"
+                        placeholder="you@example.com"
+                        autoComplete="email"
+                        {...field}
+                        className="border-zinc-700 bg-zinc-800 text-zinc-50 placeholder:text-zinc-400"
                         />
-                        <FormField
-                            control={form.control}
-                            name="password"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Password</FormLabel>
-                                <FormControl>
-                                    <Input
-                                    type="password"
-                                    placeholder="password"
-                                    {...field}
-                                    />
-                                </FormControl>
-                                <FormDescription>This is your public display name.</FormDescription>
-                                <FormMessage />
-                                </FormItem>
-                            )}
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+
+                <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                        <Input
+                        type="password"
+                        placeholder="••••••••"
+                        autoComplete="new-password"
+                        {...field}
+                        className="border-zinc-700 bg-zinc-800 text-zinc-50 placeholder:text-zinc-400"
                         />
-                        <Button type="submit" disabled={isSubmitting}>
-                            { isSubmitting ? (
-                                <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin"></Loader2>
-                                </>
-                            ) : ('SignUp')
-                            }
-                        </Button>
-                    </form>
-                </Form>
-                <div className="text-center mt-4">
-                    <p>
-                        Already a member?{' '}
-                        <Link href="./sign-in"className="text-blue-600 hover:text-blue-800">
-                        Sign in
-                        </Link>
-                    </p>
-                </div>
+                    </FormControl>
+                    <FormDescription className="text-zinc-400">
+                        Use at least 6 characters.
+                    </FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+
+                <Button
+                type="submit"
+                variant="custom"
+                className="w-full"
+                disabled={isSubmitting || isCheckingUsername}
+                >
+                {isSubmitting ? (
+                    <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating account...
+                    </>
+                ) : (
+                    "Sign Up"
+                )}
+                </Button>
+            </form>
+            </Form>
+
+            <div className="text-center text-zinc-400">
+            <p>
+                Already have an account?{" "}
+                <Link
+                href="/userSetup/sign-in"
+                className="font-medium text-blue-500 hover:text-blue-400"
+                >
+                Sign in
+                </Link>
+            </p>
             </div>
         </div>
-    )
-}
+        </div>
+    );
+};
 
-export default SignUpPage
+export default SignUpPage;
