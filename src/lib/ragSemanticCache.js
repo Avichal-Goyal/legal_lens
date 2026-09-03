@@ -9,54 +9,64 @@ const index = new Index({
 
 const CACHE_PREFIX = "ragcache:";
 
-export async function cacheRagResponse({ userId, documentId, queryEmbedding, response }) {
-    const cacheId = `${CACHE_PREFIX}${crypto.randomUUID()}`;
+export async function cacheRagResponse({
+    userId,
+    documentId,
+    queryEmbedding,
+    response,
+    domain = 'legal' // <-- 1. Accept the new domain parameter
+}) {
+    try {
+        const cacheId = `cache_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        const targetDoc = documentId ? documentId : 'GLOBAL';
 
-    // Upstash accepts your raw array natively (no Float32Array conversion needed)
-    await index.upsert({
-        id: cacheId,
-        vector: queryEmbedding,
-        metadata: {
-            userId: String(userId),
-            documentId: String(documentId),
-            response: JSON.stringify(response),
-            createdAt: new Date().toISOString(),
-        }
-    });
+        await index.upsert({
+            id: cacheId,
+            vector: queryEmbedding,
+            metadata: {
+                userId: String(userId),
+                documentId: String(targetDoc),
+                domain: String(domain), // <-- 2. Save the domain into Upstash metadata
+                response: JSON.stringify(response)
+            }
+        });
 
-    console.log("Cached response in Upstash Vector:", cacheId);
-    return cacheId;
+        return cacheId;
+    } catch (error) {
+        console.error("Cache Storage Error:", error);
+        return null;
+    }
 }
 
-export async function findSimilarCachedResponse({ userId, documentId, queryEmbedding, similarityThreshold = 0.98 }) {
-    // Query Upstash Vector
-    const results = await index.query({
-        vector: queryEmbedding,
-        topK: 1,
-        includeMetadata: true,
-        filter: `userId = '${userId}' AND documentId = '${documentId}'`
-    });
-
-    if (!results || results.length === 0) {
-        return null; // Cache miss
-    }
-
-    const bestMatch = results[0];
-
-    // Upstash returns score where 1 is an exact match (Cosine Similarity)
-    if (bestMatch.score < similarityThreshold) {
-        return null; // Not similar enough
-    }
-
+export async function findSimilarCachedResponse({
+    userId,
+    documentId,
+    queryEmbedding,
+    similarityThreshold = 0.90,
+    domain = 'legal' // <-- 1. Accept the new domain parameter
+}) {
     try {
-        return {
-            response: JSON.parse(bestMatch.metadata.response),
-            similarity: bestMatch.score,
-            cacheId: bestMatch.id,
-            createdAt: bestMatch.metadata.createdAt,
-        };
+        const targetDoc = documentId ? documentId : 'GLOBAL';
+        const result = await index.query({
+            vector: queryEmbedding,
+            topK: 1,
+            includeMetadata: true,
+            // 2. Append the domain to your Upstash filter string
+            filter: `userId = '${userId}' AND documentId = '${targetDoc}' AND domain = '${domain}'`
+        });
+
+        if (result.length > 0 && result[0].score >= similarityThreshold) {
+            return {
+                similarity: result[0].score,
+                cacheId: result[0].id,
+                response: typeof result[0].metadata.response === 'string' 
+                            ? JSON.parse(result[0].metadata.response) 
+                            : result[0].metadata.response
+            };
+        }
+        return null;
     } catch (error) {
-        console.error("Failed to parse cached response from Upstash", error);
+        console.error("Cache Lookup Error:", error);
         return null;
     }
 }

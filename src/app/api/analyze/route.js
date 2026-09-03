@@ -32,6 +32,7 @@ export async function POST(request) {
     // Reading File
     const formData = await request.formData();
     const file = formData.get("file");
+    const domain = formData.get("domain") || "legal";
 
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
@@ -84,6 +85,7 @@ export async function POST(request) {
       mime_type: file.type || "application/pdf",
       file_size: file.size,
       status: "processing",
+      domain: domain, // <-- ADD THIS line
     });
 
     if (documentError) {
@@ -160,32 +162,32 @@ export async function POST(request) {
 
     let aiAnalysis = null;
 
-    const analysisStartedAt = Date.now();
+    // const analysisStartedAt = Date.now();
 
-    try {
-        aiAnalysis = await analyze_doc_using_groq(chunks);
+    // try {
+    //     aiAnalysis = await analyze_doc_using_groq(chunks);
 
-        trace.stage("ai_analysis", {
-            durationMs: Date.now() - analysisStartedAt,
-            status: "success",
-        });
+    //     trace.stage("ai_analysis", {
+    //         durationMs: Date.now() - analysisStartedAt,
+    //         status: "success",
+    //     });
 
-    } catch (analysisError) {
+    // } catch (analysisError) {
 
-        console.error(
-            "AI analysis failed, continuing document processing:",
-            analysisError
-        );
+    //     console.error(
+    //         "AI analysis failed, continuing document processing:",
+    //         analysisError
+    //     );
 
-        trace.stage("ai_analysis", {
-            durationMs: Date.now() - analysisStartedAt,
-            status: "failed",
-            error: analysisError?.message || "Unknown AI analysis error",
-        });
+    //     trace.stage("ai_analysis", {
+    //         durationMs: Date.now() - analysisStartedAt,
+    //         status: "failed",
+    //         error: analysisError?.message || "Unknown AI analysis error",
+    //     });
 
-        // Keep the ingestion pipeline running.
-        aiAnalysis = null;
-    }
+    //     // Keep the ingestion pipeline running.
+    //     aiAnalysis = null;
+    // }
 
     const {
       error: updateError

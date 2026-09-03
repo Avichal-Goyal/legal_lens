@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 function DocumentAnalyzer() {
     const [selectedFile, setSelectedFile] = useState(null);
     const [dragActive, setDragActive] = useState(false);
+    const [domain, setDomain] = useState("legal");
     const inputRef = useRef(null);
     const router = useRouter();
 
@@ -131,6 +132,19 @@ function DocumentAnalyzer() {
                             </button>
                         </div>
                     )}
+                    <div className="w-full">
+                        <label className="text-cyan-300 text-sm font-semibold mb-1 block">Document Type</label>
+                        <select
+                            value={domain}
+                            onChange={(e) => setDomain(e.target.value)}
+                            className="w-full bg-gray-800 text-white rounded-lg p-3 border border-gray-600 outline-none focus:border-cyan-400 transition-colors"
+                        >
+                            <option value="legal">Legal Contract</option>
+                            <option value="financial">Financial Report</option>
+                            <option value="company_policy">Company Policy / HR</option>
+                            <option value="educational">Educational / Research Paper</option>
+                        </select>
+                    </div>
                     <button
                         type="submit"
                         className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 rounded-xl transition-colors text-lg shadow-md disabled:opacity-50"
