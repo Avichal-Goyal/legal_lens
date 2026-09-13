@@ -7,9 +7,6 @@ import { getServerSession } from "next-auth";
 import axios from 'axios';
 
 
-// Note: fs, path, and os are no longer needed for this logic
-// as we will process the file in memory.
-
 export const runtime = "nodejs";
 
 export async function POST(request) {
@@ -27,7 +24,7 @@ export async function POST(request) {
       );
     }
 
-    const userId = String(session.user.id);
+    userId = String(session.user.id);
 
     // Reading File
     const formData = await request.formData();

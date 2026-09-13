@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import Step from "@/components/Step";
 import axios from 'axios';
 import { useRouter } from "next/navigation";
+import { createFromNextReadableStream } from 'next/dist/client/components/router-reducer/fetch-server-response';
 
 function DocumentAnalyzer() {
     const [selectedFile, setSelectedFile] = useState(null);
@@ -48,6 +49,7 @@ function DocumentAnalyzer() {
 
         const formData = new FormData();
         formData.append("file", selectedFile);
+        formData.append("domain", domain)
 
         try {
             const response = await axios.post("/api/analyze", formData);

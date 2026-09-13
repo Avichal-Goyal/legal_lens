@@ -115,7 +115,7 @@ export async function POST(request) {
             userId,
             documentId,
             queryEmbedding: queryVector,
-            similarityThreshold: 0.90,
+            similarityThreshold: 0.85,
             domain: document.domain || "legal",
         });
 
@@ -162,7 +162,7 @@ export async function POST(request) {
         const { data: documents, error } = await supabase.rpc("match_documents_dynamic", {
             query_embedding: queryVector,
             match_threshold: 0.5,
-            match_count: 6,
+            match_count: 8,
             user_uuid: userId,
             doc_domain: document.domain || "legal",
             target_doc_id: documentId, // Restricts retrieval strictly to this active document
