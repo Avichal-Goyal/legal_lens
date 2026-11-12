@@ -169,6 +169,7 @@ import Link from 'next/link';
 import axios from 'axios';
 import { useRouter } from "next/navigation";
 import { FileText, ShieldCheck, Lock, UploadCloud, X } from "lucide-react";
+import { saveFile } from '@/lib/fileStore';
 
 const STEPS = [
     {
@@ -244,7 +245,11 @@ function DocumentAnalyzer() {
             const response = await axios.post("/api/analyze", formData);
             console.log(response.data);
 
-            console.log("Analysis response:", response.data);
+            // console.log("Analysis response:", response.data);
+
+            if (response.data.documentId) {
+                await saveFile(response.data.documentId, selectedFile);
+            }
 
             const storageData = {
                 ...response.data,
