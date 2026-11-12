@@ -79,6 +79,7 @@ export async function POST(request) {
       );
     }
 
+    console.log()
     return NextResponse.json({
       data: allChunks,
       message: "Chunks created successfully",

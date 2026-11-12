@@ -1,49 +1,49 @@
+import OpenAI from "openai";
+
+// Initialize the OpenAI SDK specifically for Gemini's endpoint
+const geminiClient = new OpenAI({
+  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+  apiKey: process.env.GEMINI_API_KEY,
+});
+
 export function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export async function query_to_vector( query,  attempt = 0 ) {
-
+export async function query_to_vector(queries, attempt = 0) {
     const MAX_RETRIES = 3;
+    
     try {
-        const response = await fetch("https://router.huggingface.co/hf-inference/models/BAAI/bge-small-en-v1.5/pipeline/feature-extraction",
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-                },
-                method: "POST",
-                body: JSON.stringify(
-                    {
-                        inputs: query,
-                        options: { wait_for_model: true }
-                    }
-                )
-            }
-        );
+        const response = await geminiClient.embeddings.create({
+            model: "gemini-embedding-001", // Gemini's embedding model
+            input: queries,
+            dimensions: 384
+        });
 
-        if ( response.status === 503 || response.status === 429 ) {
-            throw new Error("Server Busy")
+        if (typeof queries === "string") {
+            return response.data[0].embedding;
         }
 
-        return await response.json()
+        // Returns the actual vector array directly
+        return response.data.map(item => item.embedding);
+        
     } catch (error) {
-        if ( attempt >= MAX_RETRIES ) throw error;
+        if (attempt >= MAX_RETRIES) {
+            console.error(`Failed to generate embedding after ${MAX_RETRIES} attempts:`, error.message);
+            throw error;
+        }
 
         // Exponential Backoff Logic
         const backOffTime = Math.pow(2, attempt) * 1000;
 
-        // Jitter
+        // Jitter to prevent rate-limit bottlenecks
         const jitter = Math.random() * 1000;
-
         const totalWait = backOffTime + jitter;
 
         console.log(`Retrying in ${Math.round(totalWait)}ms...`);
 
-        // Now waiting before calling the AI model again
-        await new Promise(res => setTimeout(res, totalWait));
-        return query_to_vector(query, attempt + 1);
+        // Wait before calling the AI model again using your custom sleep function
+        await sleep(totalWait);
+        return query_to_vector(queries, attempt + 1);
     }
 }
-
-

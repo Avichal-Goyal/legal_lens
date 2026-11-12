@@ -177,6 +177,40 @@ export async function queryHuggingFace(prompt) {
   throw new Error("All providers are currently unavailable. Please try again shortly.");
 }
 
+// Add this export to your utility file (where queryHuggingFace is defined)
+export async function analyzeDocumentWithGemini(fullText) {
+  const prompt = `${PROMPTS.documentAnalysis}\n\nDocument:\n${fullText}`;
+  
+  try {
+    const completion = await geminiClient.chat.completions.create({
+      model: "gemini-1.5-flash", // <-- CORRECTED MODEL NAME
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.1,
+    });
+
+    const output = completion.choices[0].message.content;
+    console.log("RAW GEMINI OUTPUT:", output);
+    return safeJSON(output);
+    
+  } catch (error) {
+    console.error("Gemini Analysis Failed:", error);
+    throw error;
+  }
+}
+
+// Replace your old safeJSON function with this markdown-resistant version
+function safeJSON(str) {
+  if (!str) return null;
+  try {
+    // Strip markdown formatting if Gemini wraps the response in ```json ... ```
+    const cleanedStr = str.replace(/```json/gi, "").replace(/```/g, "").trim();
+    return JSON.parse(cleanedStr);
+  } catch (e) {
+    console.error("JSON parsing failed. Returning raw text.", e);
+    return { rawText: str };
+  }
+}
+
 export async function docQueryAssistant(prompt, query, context) {
   for (const { client: providerClient, model } of PROVIDER_CHAIN) {
     try {
@@ -236,7 +270,7 @@ export async function rephraseUserQuery(query, history) {
 
   try {
     const completion = await geminiClient.chat.completions.create({
-      model: "gemini-2.5-flash-lite",
+      model: "gemini-3.5-flash-lite",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.1,
       max_tokens: 500,
@@ -252,10 +286,3 @@ export async function getDocQueryResponse(query, context, domain = "legal") {
   return await docQueryAssistant(systemInstruction, query, context);
 }
 
-function safeJSON(str) {
-  try {
-    return JSON.parse(str);
-  } catch {
-    return { rawText: str };
-  }
-}

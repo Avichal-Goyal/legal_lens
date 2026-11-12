@@ -18,7 +18,7 @@ function NavbarPage() {
                     </li>
                 </ul>
             </nav>
-            <Link href="/login" className="text-gray-200 hover:text-blue-400 font-medium transition-colors">Login</Link>
+            <Link href="/userSetup/sign-in" className="text-gray-200 hover:text-blue-400 font-medium transition-colors">Login</Link>
         </div>
     );
 }

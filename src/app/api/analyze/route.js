@@ -5,7 +5,7 @@ import { startRagTrace } from "@/lib/ragMonitoring";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
 import axios from 'axios';
-
+import { analyzeDocumentWithGemini } from "@/lib/huggingFace";
 
 export const runtime = "nodejs";
 
@@ -156,8 +156,34 @@ export async function POST(request) {
     });
 
     // AI Analysis
-
     let aiAnalysis = null;
+    const analysisStartedAt = Date.now();
+
+    try {
+        // 1. Reconstruct the full document string from your array of chunk objects
+        const fullDocumentText = chunks.map(chunk => chunk.content).join("\n\n");
+        
+        // 2. Pass the full text string to Gemini (gemini-1.5-flash handles up to 1M tokens easily)
+        aiAnalysis = await analyzeDocumentWithGemini(fullDocumentText);
+
+        trace.stage("ai_analysis", {
+            durationMs: Date.now() - analysisStartedAt,
+            status: "success",
+        });
+
+    } catch (analysisError) {
+        console.error("AI analysis failed, continuing document processing:", analysisError);
+
+        trace.stage("ai_analysis", {
+            durationMs: Date.now() - analysisStartedAt,
+            status: "failed",
+            error: analysisError?.message || "Unknown AI analysis error",
+        });
+
+        // Keep the ingestion pipeline running even if analysis fails
+        aiAnalysis = null;
+    }
+    // ------------------------------------------------
 
     // const analysisStartedAt = Date.now();
 

@@ -115,7 +115,7 @@ export async function POST(request) {
             userId,
             documentId,
             queryEmbedding: queryVector,
-            similarityThreshold: 0.85,
+            similarityThreshold: 0.9,
             domain: document.domain || "legal",
         });
 
@@ -262,7 +262,7 @@ export async function POST(request) {
             documentId,
             queryEmbedding: queryVector,
             response: responseData,
-            vertical: document.domain || "legal",
+            domain: document.domain || "legal",
         });
 
         trace.stage(

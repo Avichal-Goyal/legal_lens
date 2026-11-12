@@ -9,7 +9,9 @@ async function embedBatchWithRetry(batch, batchIndex, maxRetries = 3) {
   let lastError;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      return await query_to_vector(batch);
+      const textArray = batch.map(chunk => chunk.content);
+      const vectorsForBatch = await query_to_vector(textArray);
+      return vectorsForBatch;
     } catch (error) {
       lastError = error;
       console.error(`Batch ${batchIndex} failed (attempt ${attempt}/${maxRetries}):`, error.message);
@@ -40,9 +42,15 @@ export async function POST(request) {
       console.log(`Processing Batch: ${batchIndex}`);
 
       const vectorsForBatch = await embedBatchWithRetry(batch, batchIndex);
+      console.log(vectorsForBatch);
       allVectors.push(...vectorsForBatch);
 
-      await sleep(1000);
+      if (batchIndex % 5 === 0) {
+          console.log("Approaching Free Tier quota limit. Sleeping for 60 seconds...");
+          await sleep(60000);
+      } else {
+          await sleep(1000);
+      }
     }
 
     console.log(`Total Vectors Generated: ${allVectors.length}`);

@@ -3,8 +3,8 @@ import crypto from "crypto";
 
 // Initialize the Upstash Vector client
 const index = new Index({
-  url: process.env.UPSTASH_VECTOR_REST_URL,
-  token: process.env.UPSTASH_VECTOR_REST_TOKEN,
+    url: process.env.UPSTASH_VECTOR_REST_URL,
+    token: process.env.UPSTASH_VECTOR_REST_TOKEN,
 });
 
 const CACHE_PREFIX = "ragcache:";
@@ -55,12 +55,14 @@ export async function findSimilarCachedResponse({
             filter: `userId = '${userId}' AND documentId = '${targetDoc}' AND domain = '${domain}'`
         });
 
+        console.log("DEBUG CACHE RAW RESULTS:", JSON.stringify(result, null, 2));
+
         if (result.length > 0 && result[0].score >= similarityThreshold) {
             return {
                 similarity: result[0].score,
                 cacheId: result[0].id,
-                response: typeof result[0].metadata.response === 'string' 
-                            ? JSON.parse(result[0].metadata.response) 
+                response: typeof result[0].metadata.response === 'string'
+                            ? JSON.parse(result[0].metadata.response)
                             : result[0].metadata.response
             };
         }

@@ -1,34 +1,32 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card } from "@/components/ui/card";
-
-export default function LegalClauses({clauses}) {
-
+export default function LegalClauses({ clauses = [] }) {
     return (
-        <div className="absolute inset-0 z-50 bg-neutral-50/98 backdrop-blur-md flex flex-col pt-8 px-8">
-            <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold text-neutral-900 font-sans">Extracted Clauses</h2>
-                {/* <button onClick={onClose} className="p-2 hover:bg-neutral-200 rounded-full transition-all">✕</button> */}
+        <section>
+            <div className="border-b border-[#DFD5BE] px-8 py-6">
+                <h2 className="ll-font-display text-2xl text-[#201C15]">Extracted clauses</h2>
+                <p className="mt-1 text-sm text-[#6B6152]">
+                    {clauses.length > 0
+                        ? `${clauses.length} clauses worth a closer read.`
+                        : "Clauses worth a closer read."}
+                </p>
             </div>
 
-            <ScrollArea className="flex-1 h-[500px]">
-                    <div className="max-w-3xl mx-auto space-y-6 pb-12">
-                    {clauses.map((clause, i) => (
-                        <Card key={i} className="p-6 border-neutral-200 bg-white shadow-sm hover:border-neutral-300 transition-colors">
-                            <h3 className="text-lg font-bold text-neutral-900 mb-3">{clause.title}</h3>
-                            {/* <div className="pl-4 border-l-2 border-neutral-200 mb-4 italic text-neutral-600 text-sm">
-                                "{clause.explanation}"
-                            </div> */}
-
-                            <div className="bg-neutral-50 p-3 rounded-lg border border-neutral-100">
-                                <p className="text-xs font-bold uppercase text-neutral-400 mb-1">AI Insight</p>
-                                <p className="text-sm text-neutral-800 leading-relaxed">{clause.explanation}</p>
-                            </div>
-                        </Card>
-                    ))}
+            <div className="px-8 py-7">
+                {clauses.length > 0 ? (
+                    <div className="space-y-5">
+                        {clauses.map((clause, i) => (
+                            <article key={i} className="rounded-md border border-[#DFD5BE] bg-white overflow-hidden">
+                                <h3 className="ll-font-display text-lg text-[#201C15] px-5 pt-5 pb-3">{clause.title}</h3>
+                                <div className="border-t border-[#DFD5BE] bg-[#F3EDDD] px-5 py-4">
+                                    <p className="text-xs font-medium text-[#8B6528] mb-1.5">Legal Lens insight</p>
+                                    <p className="text-sm leading-relaxed text-[#3A3527]">{clause.explanation}</p>
+                                </div>
+                            </article>
+                        ))}
                     </div>
-                </ScrollArea>
-
-            
-        </div>
+                ) : (
+                    <p className="text-sm text-[#6B6152]">No key clauses were extracted from this document.</p>
+                )}
+            </div>
+        </section>
     );
 }

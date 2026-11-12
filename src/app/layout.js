@@ -12,9 +12,15 @@ export default function RootLayout({ children }) {
   const pathname = usePathname();
   const showNavbarForUserSetup = pathname === "/userSetup/sign-in" || pathname === "/userSetup/sign-up";
   const showNavbarForFeatures = pathname === "/consultant" || pathname ==="/analysisResult" || pathname === "/testAnalyze" || pathname === "/testAnalyze2";
+  const dontShowNavbar = pathname === "/" || pathname === "/fileText"
+  
   return (
     <html lang="en">
-      {!showNavbarForFeatures && <body className="min-h-screen bg-black">
+      {dontShowNavbar && <body>
+        <main className="">{children}</main>
+        <Toaster position="top-right" richColors />
+      </body>}
+      {!showNavbarForFeatures && !dontShowNavbar && <body className="min-h-screen bg-black">
         {showNavbarForUserSetup && <Navbar2 />}
         {!showNavbarForUserSetup && <NavbarPage />}
         <main className="pt-16">{children}</main>
