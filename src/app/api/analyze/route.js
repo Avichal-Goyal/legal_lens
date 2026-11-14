@@ -8,7 +8,7 @@ import axios from 'axios';
 import { analyzeDocumentWithGemini } from "@/lib/huggingFace";
 
 export const runtime = "nodejs";
-
+const baseUrl = "https://legal-lens-wine-mu.vercel.app";
 export async function POST(request) {
   let trace;
   let documentId = null;
@@ -92,7 +92,7 @@ export async function POST(request) {
     const parsingStartedAt = Date.now();
 
     const parsingResponse = await axios.post(
-      "src/app/api/analyze/parsing_chunking",
+      `${baseUrl}/api/analyze/parsing_chunking`,
       formData
     );
 
@@ -112,7 +112,7 @@ export async function POST(request) {
     const embeddingStartedAt = Date.now();
 
     const embeddingResponse = await axios.post(
-      "src/app/api/analyze/doc_vector_storing/chunk_embedding",
+      `${baseUrl}/api/analyze/doc_vector_storing/chunk_embedding`,
       { chunks }
     );
 
