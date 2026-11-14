@@ -92,7 +92,7 @@ export async function POST(request) {
     const parsingStartedAt = Date.now();
 
     const parsingResponse = await axios.post(
-      "http://localhost:3000/api/analyze/parsing_chunking",
+      "src/app/api/analyze/parsing_chunking",
       formData
     );
 
@@ -112,7 +112,7 @@ export async function POST(request) {
     const embeddingStartedAt = Date.now();
 
     const embeddingResponse = await axios.post(
-      "http://localhost:3000/api/analyze/doc_vector_storing/chunk_embedding",
+      "src/app/api/analyze/doc_vector_storing/chunk_embedding",
       { chunks }
     );
 
